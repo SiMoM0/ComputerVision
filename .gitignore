@@ -1,0 +1,8 @@
+#VS Code configuration
+*.json
+
+#Executables
+*.exe
+
+#Object file
+*.o

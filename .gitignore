@@ -6,3 +6,6 @@
 
 #Object file
 *.o
+
+#cmakelist
+cmakelist*

@@ -4,6 +4,7 @@
 #include <opencv2/imgproc.hpp>
 
 using namespace cv;
+using namespace std;
 
 //Global variables
 Mat gray, edges;
@@ -37,6 +38,11 @@ static void cannyMaxThreshold(int, void*) {
 
 int main(int argc, char** argv) {
     Mat src = imread(argv[1]);
+    //input image controls
+    if(src.empty()) {
+        printf("Could not open or find image");
+        return -1;
+    }
 
     //convert to grayscale
     cvtColor(src, gray, COLOR_BGR2GRAY);
@@ -49,6 +55,9 @@ int main(int argc, char** argv) {
     createTrackbar("Min Threshold: ", window, &low_threshold, max_lowThreshold, cannyMinThreshold);
     createTrackbar("Max Threshold: ", window, &high_threshold, max_highThreshold, cannyMaxThreshold);
     waitKey(0);
+
+    //save canny image
+    //imwrite("canny_image.jpg", edges);
     
     return 0;
 }

@@ -8,6 +8,12 @@ using namespace std;
 
 int main(int argc, char** argv) {
     Mat src = imread(argv[1]);
+    //input image controls
+    if(src.empty()) {
+        printf("Could not open or find image");
+        return -1;
+    }
+
     Mat gray, smooth, canny, hough;
 
     //convert to grayscale
@@ -83,6 +89,9 @@ int main(int argc, char** argv) {
     imshow("Image", src);
     imshow("Canny Detector", canny);
     imshow("Hough Transform", hough);
+
+    //save image
+    imwrite("red_lines.jpg", hough);
 
     waitKey(0);
     

@@ -8,6 +8,12 @@ using namespace std;
 
 int main(int argc, char** argv) {
     Mat src = imread(argv[1]);
+    //input image controls
+    if(src.empty()) {
+        printf("Could not open or find image");
+        return -1;
+    }
+
     Mat gray, smooth, hough;
 
     //convert to grayscale
@@ -39,6 +45,10 @@ int main(int argc, char** argv) {
     namedWindow("Hough Circles");
     imshow("Image", src);
     imshow("Hough Circles", hough);
+
+    //save image
+    //imwrite("road_sign.jpg", hough);
+
     waitKey(0);
 
     return 0;

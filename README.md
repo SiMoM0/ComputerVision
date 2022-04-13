@@ -39,3 +39,12 @@ Topics:
 * Road sign detection with Hough circular transform
 
 Files: [Lab4](https://github.com/SiMoM0/ComputerVision/tree/master/Lab4)
+
+### Lab 5 - Segmentation
+
+Topics:
+* Otsu's optimal threshold (Histogram based)
+* Region growing method and Watershed transformation
+* Clustering based methods
+
+Files: [Lab5](https://github.com/SiMoM0/ComputerVision/tree/master/Lab5)

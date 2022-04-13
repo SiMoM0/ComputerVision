@@ -7,6 +7,12 @@ using namespace cv;
 using namespace std;
 
 int main(int argc, char** argv) {
+    //check input arguments
+    if(argc != 2) {
+        printf("Invalid sintax");
+        return -1;
+    }
+
     Mat src = imread(argv[1]);
     //input image controls
     if(src.empty()) {
@@ -38,7 +44,7 @@ int main(int argc, char** argv) {
         double a, b, x0, y0;
 
         //check for the two road lines
-        //the first condition look for an angle of about 45
+        //the first condition looks for an angle of about 45
         //the second for an angle of about 135
         if(theta>CV_PI/180*40 && theta<CV_PI/180*60) {
             a = cos(theta);
@@ -91,7 +97,7 @@ int main(int argc, char** argv) {
     imshow("Hough Transform", hough);
 
     //save image
-    imwrite("red_lines.jpg", hough);
+    //imwrite("red_lines.jpg", hough);
 
     waitKey(0);
     

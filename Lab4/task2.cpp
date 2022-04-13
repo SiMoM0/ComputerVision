@@ -7,6 +7,12 @@ using namespace cv;
 using namespace std;
 
 int main(int argc, char** argv) {
+    //check input arguments
+    if(argc != 2) {
+        printf("Invalid sintax");
+        return -1;
+    }
+
     Mat src = imread(argv[1]);
     //input image controls
     if(src.empty()) {
@@ -21,13 +27,13 @@ int main(int argc, char** argv) {
     //smooth image using blur filter
     blur(gray, smooth, Size(5, 5));
 
-    //sobel for 45 degree angles
+    //sobel for 45 degree angle
     Mat kernel1 = (Mat_<float>(3, 3) <<
                 -2, -1, 0,
                 -1, 0, 1,
                 0, 1, 2);
 
-    //sobel for -45 degree angles
+    //sobel for -45 degree angle
     Mat kernel2 = (Mat_<float>(3, 3) <<
                 0, 1, 2,
                 -1, 0, 1,

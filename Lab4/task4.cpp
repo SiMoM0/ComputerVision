@@ -7,6 +7,12 @@ using namespace cv;
 using namespace std;
 
 int main(int argc, char** argv) {
+    //check input arguments
+    if(argc != 2) {
+        printf("Invalid sintax");
+        return -1;
+    }
+    
     Mat src = imread(argv[1]);
     //input image controls
     if(src.empty()) {

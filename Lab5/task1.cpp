@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
         printf("Invalid sintax");
         return -1;
     }
-
+    //load input image and check it
     src = imread(argv[1]);
     if(src.empty()) {
         printf("Could not open or find image");
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     
     //apply otsu threshold
     Mat otsu (src.rows, src.cols, CV_8UC3);
-    otsuSegmentation(src, otsu, 21);
+    otsuSegmentation(src, otsu, 7);
 
     vector<pair<int, int>> points;
 
@@ -49,10 +49,9 @@ int main(int argc, char** argv) {
     namedWindow("Image");
     setMouseCallback("Image", mouseCallback, &points); // Register the callback function
     imshow("Image", src);
-    waitKey(0);
     namedWindow("Otsu thresholding");
     imshow("Otsu thresholding", otsu);
-
+    waitKey(0);
 
 
     //apply regionGrowing and show image

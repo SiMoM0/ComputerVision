@@ -21,4 +21,11 @@ void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize);
  */
 void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar similarity);
 
+/**
+ * Watershed algorithm.
+ * @param input input color image of type cv::Mat
+ * @param output output image of type cv::Mat
+ */
+void watershedSegmentation(const cv::Mat& input, cv::Mat& output);
+
 #endif //SEGMENTATION

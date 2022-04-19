@@ -72,7 +72,7 @@ void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar s
     cv::cvtColor(input, gray, cv::COLOR_BGR2GRAY);
     cv::blur(gray, img, cv::Size(ksize, ksize));
     cv::threshold(img, img, 50, 255, cv::THRESH_BINARY_INV);
-    cv::imshow("Threshold", img);
+    //cv::imshow("Threshold", img);
 
     //loop threshold image to erode pixel groups in a single one (there may be better methods (?))
     for(int i=0; i<rows; ++i) {
@@ -99,8 +99,8 @@ void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar s
         }
     }
 
-    cv::imshow("Erosion", img);
-    cv::waitKey(0);
+    //cv::imshow("Erosion", img);
+    //cv::waitKey(0);
 
     //point to be visited
     std::vector<std::pair<int, int>> points;
@@ -147,4 +147,64 @@ void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar s
     }
     //copy Q into mask
     mask = Q.clone();
+}
+
+void watershedSegmentation(const cv::Mat& input, cv::Mat& output) {
+    //implementation of watershed algorithm as described in the documentation
+    cv::Mat bw, dist;
+
+    //convert to grayscale, smooth and use threshold
+    cv::cvtColor(input, bw, cv::COLOR_BGR2GRAY);
+    cv::blur(bw, bw, cv::Size(7, 7));
+    cv::threshold(bw, bw, 0, 255, cv::THRESH_BINARY_INV | cv::THRESH_OTSU);
+    cv::imshow("Binary image", bw);
+    cv::waitKey(0);
+
+    //perform the distance transofrm algorithm
+    cv::distanceTransform(bw, dist, cv::DIST_L2, 3);
+    //normalize distance image
+    cv::normalize(dist, dist, 0, 1.0, cv::NORM_MINMAX);
+    cv::imshow("Distance", dist);
+    cv::waitKey(0);
+
+    //threshold to obtain peaks, markers for cracks
+    cv::threshold(dist, dist, 0.4, 1.0, cv::THRESH_BINARY);
+    //dilate the dist image
+    cv::dilate(dist, dist, cv::Mat::ones(3, 3, CV_8U));
+    cv::imshow("Dilate", dist);
+    cv::waitKey(0);
+
+    //from each blob create a seed for watershed algorithm
+    cv::Mat dist8u, markers8u;
+    cv::Mat markers = cv::Mat::zeros(dist.size(), CV_32S);
+    dist.convertTo(dist8u, CV_8U);
+    //find total markers
+    std::vector<std::vector<cv::Point>> contours;
+    cv::findContours(dist8u, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    //draw foreground markers
+    for(size_t i=0; i<contours.size(); ++i) {
+        cv::drawContours(markers, contours, static_cast<int>(i), cv::Scalar(static_cast<int>(i)+1), -1);
+    }
+    //draw background markers
+    cv::circle(markers, cv::Point(5, 5), 3, cv::Scalar(255), -1);
+    markers.convertTo(markers8u, CV_8U, 10);
+    cv::imshow("Markers", markers8u);
+    cv::waitKey(0);
+
+    //apply the watershed algorithm
+    cv::Mat result = input;
+    cv::watershed(result, markers);
+    cv::Mat mark;
+    markers.convertTo(mark, CV_8U);
+    cv::bitwise_not(mark, mark);
+
+    //create output image
+    for(int i=0; i<markers.rows; ++i) {
+        for(int j=0; j<markers.cols; ++j) {
+            int index = markers.at<int>(i, j);
+            if(index > 0 && index <= static_cast<int>(contours.size())) {
+                output.at<cv::Vec3b>(i, j) = cv::Vec3b(255, 0, 255);
+            }
+        }
+    }
 }

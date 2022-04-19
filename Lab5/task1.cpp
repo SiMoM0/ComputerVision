@@ -45,6 +45,15 @@ int main(int argc, char** argv) {
     namedWindow("Region Growing");
     imshow("Region Growing", region);
     waitKey(0);
+
+    //apply watershed (doesn't seems to work properly)
+    Mat wshed (src.rows, src.cols, CV_8UC3);
+    watershedSegmentation(src, wshed);
+    
+    //show image
+    namedWindow("Watershed");
+    imshow("Watershed", wshed);
+    waitKey(0);
     
     return 0;
 }

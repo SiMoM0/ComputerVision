@@ -10,7 +10,7 @@ void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize) {
     //apply blur filter
     cv::blur(gray, temp, cv::Size(ksize, ksize));
     //Otsu optimal threshold to output image
-    threshold(temp, mask, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    cv::threshold(temp, mask, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
 
     //---segment input image with the original colors---
     //since there are only two segment, store two values
@@ -50,7 +50,7 @@ void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize) {
     //color the two areas
     for(int i=0; i<output.rows; ++i) {
         for(int j=0; j<output.cols; ++j) {
-            //dark value in otsu threshold
+            //white value in otsu threshold
             if(mask.at<unsigned char>(i, j) > 128) {
                 output.at<cv::Vec3b>(i, j) = cv::Vec3b(avg1[0], avg1[1], avg1[2]);
             } else {
@@ -60,60 +60,66 @@ void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize) {
     }
 }
 
-cv::Mat regionGrowing(const cv::Mat& input, const std::vector<std::pair<int, int>>& seed, uchar similarity) {
-    //output image to be return
-    cv::Mat output (input.rows, input.cols, CV_8UC1);
+void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar similarity) {
+    //number of rows and columns of input and output image
+    int rows = input.rows;
+    int cols = input.cols;
     //predicate Q for controlling growing, 0 if not visited yet, 255 otherwise
-    cv::Mat Q = cv::Mat::zeros(input.rows, input.cols, CV_8UC1);
+    cv::Mat Q = cv::Mat::zeros(rows, cols, CV_8UC1);
 
-    //convert to grayscale, apply blur and threshold
+    //convert to grayscale, apply blur and threshold (inverse to obtain white for cracks)
     cv::Mat gray, img;
     cv::cvtColor(input, gray, cv::COLOR_BGR2GRAY);
-    cv::blur(gray, img, cv::Size(5, 5));
+    cv::blur(gray, img, cv::Size(ksize, ksize));
     cv::threshold(img, img, 50, 255, cv::THRESH_BINARY_INV);
     cv::imshow("Threshold", img);
 
-    //erode image
-    cv::Mat temp, eroded;
-    cv::Mat skel (img.size(), CV_8UC1, cv::Scalar(0));
-    cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
-    bool done;
-    //loop
-    do {
-        cv::erode(img, eroded, element);
-        cv::dilate(eroded, temp, element);
-        cv::subtract(img, temp, temp);
-        cv::bitwise_or(skel, temp, skel);
-        cv::erode(img, img, element);
+    //loop threshold image to erode pixel groups in a single one (there may be better methods (?))
+    for(int i=0; i<rows; ++i) {
+        for(int j=0; j<cols; ++j) {
+            //if the current pixel is black pass this iteration
+            if (img.at<uchar>(i, j) == 0)
+                continue;
+            //flag for controls on neighbors
+            bool flag = false;
+            //check right, down, left and up pixel, in this order
+            if(j < cols-1 && img.at<uchar>(i, j+1) == 255) {
+                flag = true;
+            } else if(i < rows-1 && img.at<uchar>(i+1, j) == 255) {
+                flag = true;
+            } else if(j > 0 && img.at<uchar>(i, j-1) == 255) {
+                flag = true;
+            } else if(i > 0 && img.at<uchar>(i-1, j) == 255) {
+                flag = true;
+            }
 
-        done = (cv::countNonZero(img) == 0);
-    } while(!done);
+            //change color if flag is true after checking all neighbors
+            if(flag)
+                img.at<uchar>(i, j) = 0;
+        }
+    }
 
-    cv::imshow("Eroded", skel);
-    cv::imshow("Imm", gray);
+    cv::imshow("Erosion", img);
     cv::waitKey(0);
 
     //point to be visited
-    std::vector<std::pair<int, int>> points = seed;
+    std::vector<std::pair<int, int>> points;
 
     int p = 0;
     //add points of the skeleton image into the vector
-    for(int i=0; i<skel.rows; ++i) {
-        for(int j=0; j<skel.cols; ++j) {
-            if(skel.at<uchar>(i, j) == 255) {
-                if(p%10 == 0) {
+    for(int i=0; i<img.rows; ++i) {
+        for(int j=0; j<img.cols; ++j) {
+            if(img.at<uchar>(i, j) == 255) {
                 //add to points vector
-                //NOTE: not all the points of the skeleton image are added, since they could be too much
+                //NOTE: not all the points of the skeleton image may be added, since they could be too much
                 points.push_back(std::pair<int, int>(i, j));
                 //std::printf("White point at (%d, %d)\n", i, j);
-                }
                 //update point counter
                 p++;
             }
         }
     }
     std::printf("Points: %d", p);
-
     while(!points.empty()) {
         //pop a single point
         std::pair<int, int> p = points.back();
@@ -126,18 +132,19 @@ cv::Mat regionGrowing(const cv::Mat& input, const std::vector<std::pair<int, int
 
         //loop for each neighbour
         for(int i=p.first-1; i<=p.first+1; ++i) {
-            for(int j=p.second; j<=p.second+1; ++j) {
+            for(int j=p.second-1; j<=p.second+1; ++j) {
                 //get neighbour pixel value
                 uchar neigh = gray.at<uchar>(i, j);
                 //check if it has been visited
                 uchar visited = Q.at<uchar>(i, j);
 
                 //check if the neighbour pixel is similar
-                if(visited == 0 && std::abs(neigh-color) <= similarity) {
+                if(!visited && std::abs(neigh-color) <= similarity) {
                     points.push_back(std::pair<int, int>(i, j));
                 }
             }
         }
     }
-    return Q;
+    //copy Q into mask
+    mask = Q.clone();
 }

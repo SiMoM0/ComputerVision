@@ -15,10 +15,10 @@ void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize);
 /**
  * Region growing algorithm for segmentation.
  * @param input input color image of type cv::Mat
- * @param seed seed points of type vector<int, int>
+ * @param mask output mask for segmentation of type cv::Mat
+ * @param ksize kernel size of the blur filter
  * @param similarity distance criteria between neighbour points, ucha value
- * @return mask result for segmentation
  */
-cv::Mat regionGrowing(const cv::Mat& input, const std::vector<std::pair<int, int>>& seed, uchar similarity);
+void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar similarity);
 
 #endif //SEGMENTATION

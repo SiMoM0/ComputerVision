@@ -24,10 +24,8 @@ int main(int argc, char** argv) {
     Mat otsu (src.rows, src.cols, CV_8UC3);
     otsuSegmentation(src, otsu, 9);
     //save otsu image with the name otsu_{asphalt number}.png in Images folder
-    string filename_otsu = "Images/otsu_" + string(argv[1]).substr(10);
-    imwrite(filename_otsu, otsu);
-
-    vector<pair<int, int>> points;
+    //string filename_otsu = "Images/otsu_" + string(argv[1]).substr(10);
+    //imwrite(filename_otsu, otsu);
 
     //show images
     namedWindow("Image");
@@ -36,8 +34,14 @@ int main(int argc, char** argv) {
     imshow("Otsu thresholding", otsu);
     waitKey(0);
 
-    //apply regionGrowing and show image
-    Mat region = regionGrowing(src, points, 20);
+    //apply regionGrowing
+    Mat region (src.rows, src.cols, CV_8UC1);
+    regionGrowing(src, region, 5, 10);
+    //save region growing image with the name rgrow_{asphalt number}.png in Images folder
+    //string filename_rgrow = "Images/rgrow_" + string(argv[1]).substr(10);
+    //imwrite(filename_rgrow, region);
+    
+    //show images
     namedWindow("Region Growing");
     imshow("Region Growing", region);
     waitKey(0);

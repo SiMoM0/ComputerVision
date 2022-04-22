@@ -54,6 +54,20 @@ int main(int argc, char** argv) {
     namedWindow("Watershed");
     imshow("Watershed", wshed);
     waitKey(0);
+
+    //apply kmeans segmentation
+    Mat clusters, temp;
+    //with a blur filter the result improves significantly
+    blur(src, temp, Size(7, 7));
+    kmeansSegmentation(temp, clusters, 2);
+    //save kmenas segmented image with the name kmeans_{asphalt number}.png in Images folder
+    //string filename_kmeans = "Images/kmeans_" + string(argv[1]).substr(10);
+    //imwrite(filename_kmeans, clusters);
+
+    //show images
+    namedWindow("Kmeans");
+    imshow("Kmeans", clusters);
+    waitKey(0);
     
     return 0;
 }

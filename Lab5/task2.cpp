@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     Mat clusters;
     kmeansSegmentation(src, clusters, 3);
     //save image
-    imwrite("Images/street_segmented.png", clusters);
+    //imwrite("Images/street_segmented.png", clusters);
 
     //show image
     namedWindow("Image");

@@ -208,3 +208,28 @@ void watershedSegmentation(const cv::Mat& input, cv::Mat& output) {
         }
     }
 }
+
+void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k) {
+    //data array for kmeans function, input image need to be converted to array like
+    cv::Mat data = input.reshape(1, input.rows * input.cols);
+    //convert to 32 float
+    data.convertTo(data, CV_32F);
+    
+    //structures for kmeans function
+    std::vector<int> labels;
+    cv::Mat1f centers;
+    //apply kmeans
+    double compactness = cv::kmeans(data, k, labels, cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 0.1), 10, cv::KMEANS_PP_CENTERS, centers);
+    std::printf("Compactness: %d", compactness);
+
+    //update data array with clusters colors
+    for(int i=0; i<data.rows; ++i) {
+        data.at<float>(i, 0) = centers(labels[i], 0);
+        data.at<float>(i, 1) = centers(labels[i], 1);
+        data.at<float>(i, 2) = centers(labels[i], 2);
+    }
+
+    //reshape into output image
+    output = data.reshape(3, input.rows);
+    output.convertTo(output, CV_8UC3);
+}

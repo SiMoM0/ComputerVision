@@ -28,4 +28,12 @@ void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar s
  */
 void watershedSegmentation(const cv::Mat& input, cv::Mat& output);
 
+/**
+ * K-Means algorithm for segmentation.
+ * @param input input color image of type cv::Mat
+ * @param output output image of type cv::Mat
+ * @param k number of clusters
+ */
+void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k);
+
 #endif //SEGMENTATION

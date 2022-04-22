@@ -133,14 +133,17 @@ void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar s
         //loop for each neighbour
         for(int i=p.first-1; i<=p.first+1; ++i) {
             for(int j=p.second-1; j<=p.second+1; ++j) {
-                //get neighbour pixel value
-                uchar neigh = gray.at<uchar>(i, j);
-                //check if it has been visited
-                uchar visited = Q.at<uchar>(i, j);
+                //check if pixel coordinates exist
+                if(i>=0 && i<rows && j>=0 && j<cols) {
+                    //get neighbour pixel value
+                    uchar neigh = gray.at<uchar>(i, j);
+                    //check if it has been visited
+                    uchar visited = Q.at<uchar>(i, j);
 
-                //check if the neighbour pixel is similar
-                if(!visited && std::abs(neigh-color) <= similarity) {
-                    points.push_back(std::pair<int, int>(i, j));
+                    //check if the neighbour pixel is similar
+                    if(!visited && std::abs(neigh-color) <= similarity) {
+                        points.push_back(std::pair<int, int>(i, j));
+                    }
                 }
             }
         }
@@ -150,13 +153,13 @@ void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar s
 }
 
 void watershedSegmentation(const cv::Mat& input, cv::Mat& output) {
-    //implementation of watershed algorithm as described in the documentation
+    //implementation of watershed algorithm as described in the documentation (NOT GOOD RESULT)
     cv::Mat bw, dist;
 
     //convert to grayscale, smooth and use threshold
     cv::cvtColor(input, bw, cv::COLOR_BGR2GRAY);
-    cv::blur(bw, bw, cv::Size(7, 7));
-    cv::threshold(bw, bw, 0, 255, cv::THRESH_BINARY_INV | cv::THRESH_OTSU);
+    cv::blur(bw, bw, cv::Size(5, 5));
+    cv::threshold(bw, bw, 60, 255, cv::THRESH_BINARY_INV);
     cv::imshow("Binary image", bw);
     cv::waitKey(0);
 
@@ -168,22 +171,26 @@ void watershedSegmentation(const cv::Mat& input, cv::Mat& output) {
     cv::waitKey(0);
 
     //threshold to obtain peaks, markers for cracks
-    cv::threshold(dist, dist, 0.4, 1.0, cv::THRESH_BINARY);
+    cv::threshold(dist, dist, 0.5, 1.0, cv::THRESH_BINARY);
     //dilate the dist image
-    cv::dilate(dist, dist, cv::Mat::ones(3, 3, CV_8U));
+    //cv::dilate(dist, dist, cv::Mat::ones(3, 3, CV_8U));
     cv::imshow("Dilate", dist);
     cv::waitKey(0);
 
     //from each blob create a seed for watershed algorithm
     cv::Mat dist8u, markers8u;
-    cv::Mat markers = cv::Mat::zeros(dist.size(), CV_32S);
+    cv::Mat markers = cv::Mat::zeros(dist.size(), CV_32SC1);
     dist.convertTo(dist8u, CV_8U);
     //find total markers
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(dist8u, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+    //number of contours
+    int ncomp = static_cast<int>(contours.size());
+    std::printf("Contours: %d\n", ncomp);
+
     //draw foreground markers
-    for(size_t i=0; i<contours.size(); ++i) {
-        cv::drawContours(markers, contours, static_cast<int>(i), cv::Scalar(static_cast<int>(i)+1), -1);
+    for(int i=0; i<ncomp; ++i) {
+        cv::drawContours(markers, contours, i, cv::Scalar(i+1), -1);
     }
     //draw background markers
     cv::circle(markers, cv::Point(5, 5), 3, cv::Scalar(255), -1);
@@ -192,18 +199,29 @@ void watershedSegmentation(const cv::Mat& input, cv::Mat& output) {
     cv::waitKey(0);
 
     //apply the watershed algorithm
-    cv::Mat result = input;
+    cv::Mat result = input.clone();
     cv::watershed(result, markers);
     cv::Mat mark;
     markers.convertTo(mark, CV_8U);
     cv::bitwise_not(mark, mark);
 
+    //generate random colors
+    cv::RNG rng (12345);
+    std::vector<cv::Vec3b> colors;
+    for(int i=0; i<ncomp; ++i) {
+        uchar b = static_cast<uchar>(rng.uniform(0, 255));
+        uchar g = static_cast<uchar>(rng.uniform(0, 255));
+        uchar r = static_cast<uchar>(rng.uniform(0, 255));
+        //insert new color
+        colors.push_back(cv::Vec3b(b, g, r));
+    }
+
     //create output image
     for(int i=0; i<markers.rows; ++i) {
         for(int j=0; j<markers.cols; ++j) {
             int index = markers.at<int>(i, j);
-            if(index > 0 && index <= static_cast<int>(contours.size())) {
-                output.at<cv::Vec3b>(i, j) = cv::Vec3b(255, 0, 255);
+            if(index > 0 && index <= ncomp) {
+                output.at<cv::Vec3b>(i, j) = colors[index-1];
             }
         }
     }
@@ -220,7 +238,7 @@ void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k) {
     cv::Mat1f centers;
     //apply kmeans
     double compactness = cv::kmeans(data, k, labels, cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 0.1), 10, cv::KMEANS_PP_CENTERS, centers);
-    std::printf("Compactness: %d", compactness);
+    std::printf("Compactness: %d\n", compactness);
 
     //update data array with clusters colors
     for(int i=0; i<data.rows; ++i) {

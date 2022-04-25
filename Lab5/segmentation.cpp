@@ -10,7 +10,8 @@ void otsuSegmentation(const cv::Mat& input, cv::Mat& output, const int ksize) {
     //apply blur filter
     cv::blur(gray, temp, cv::Size(ksize, ksize));
     //Otsu optimal threshold to output image
-    cv::threshold(temp, mask, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    double value = cv::threshold(temp, mask, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+    std::printf("Otsu threshold: %f\n", value);
 
     //---segment input image with the original colors---
     //since there are only two segment, store two values
@@ -119,7 +120,7 @@ void regionGrowing(const cv::Mat& input, cv::Mat& mask, const int ksize, uchar s
             }
         }
     }
-    std::printf("Points: %d", p);
+    std::printf("Points: %d\n", p);
     while(!points.empty()) {
         //pop a single point
         std::pair<int, int> p = points.back();
@@ -160,22 +161,22 @@ void watershedSegmentation(const cv::Mat& input, cv::Mat& output) {
     cv::cvtColor(input, bw, cv::COLOR_BGR2GRAY);
     cv::blur(bw, bw, cv::Size(5, 5));
     cv::threshold(bw, bw, 60, 255, cv::THRESH_BINARY_INV);
-    cv::imshow("Binary image", bw);
-    cv::waitKey(0);
+    //cv::imshow("Binary image", bw);
+    //cv::waitKey(0);
 
     //perform the distance transofrm algorithm
     cv::distanceTransform(bw, dist, cv::DIST_L2, 3);
     //normalize distance image
     cv::normalize(dist, dist, 0, 1.0, cv::NORM_MINMAX);
-    cv::imshow("Distance", dist);
-    cv::waitKey(0);
+    //cv::imshow("Distance", dist);
+    //cv::waitKey(0);
 
     //threshold to obtain peaks, markers for cracks
     cv::threshold(dist, dist, 0.5, 1.0, cv::THRESH_BINARY);
     //dilate the dist image
     //cv::dilate(dist, dist, cv::Mat::ones(3, 3, CV_8U));
-    cv::imshow("Dilate", dist);
-    cv::waitKey(0);
+    //cv::imshow("Dilate", dist);
+    //cv::waitKey(0);
 
     //from each blob create a seed for watershed algorithm
     cv::Mat dist8u, markers8u;
@@ -227,7 +228,7 @@ void watershedSegmentation(const cv::Mat& input, cv::Mat& output) {
     }
 }
 
-void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k) {
+void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k, const bool color=false) {
     //data array for kmeans function, input image need to be converted to array like
     cv::Mat data = input.reshape(1, input.rows * input.cols);
     //convert to 32 float
@@ -238,7 +239,7 @@ void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k) {
     cv::Mat1f centers;
     //apply kmeans
     double compactness = cv::kmeans(data, k, labels, cv::TermCriteria(cv::TermCriteria::EPS + cv::TermCriteria::COUNT, 10, 0.1), 10, cv::KMEANS_PP_CENTERS, centers);
-    std::printf("Compactness: %d\n", compactness);
+    std::printf("Compactness: %f\n", compactness);
 
     //update data array with clusters colors
     for(int i=0; i<data.rows; ++i) {
@@ -250,4 +251,25 @@ void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k) {
     //reshape into output image
     output = data.reshape(3, input.rows);
     output.convertTo(output, CV_8UC3);
+
+    //for task 3, segment only the t-shirts (parameter color set to true)
+    if(color) {
+        //center number for the t-shirts is the fifth
+        int index = 4;
+        cv::Mat mask;
+        //get the cluster color and apply inRange function
+        cv::Scalar color (centers(index, 0), centers(index, 1), centers(index, 2));
+        cv::inRange(output, color, color, mask);
+        //cv::imshow("Mask", mask);
+        //cv::waitKey(0);
+
+        //apply mask using copyTo function and temp Mat
+        cv::Mat tmp;
+        output.copyTo(tmp, mask);
+        //cv::imshow("Final", fin);
+        //cv::waitKey(0);
+
+        //clone to output image
+        output = tmp.clone();
+    }
 }

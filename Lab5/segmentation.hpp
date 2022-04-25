@@ -33,7 +33,8 @@ void watershedSegmentation(const cv::Mat& input, cv::Mat& output);
  * @param input input color image of type cv::Mat
  * @param output output image of type cv::Mat
  * @param k number of clusters
+ * @param color true if executing task3, default false
  */
-void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k);
+void kmeansSegmentation(const cv::Mat& input, cv::Mat& output, const int k, const bool color=false);
 
 #endif //SEGMENTATION

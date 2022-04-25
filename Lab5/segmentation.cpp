@@ -196,8 +196,8 @@ void watershedSegmentation(const cv::Mat& input, cv::Mat& output) {
     //draw background markers
     cv::circle(markers, cv::Point(5, 5), 3, cv::Scalar(255), -1);
     markers.convertTo(markers8u, CV_8U, 10);
-    cv::imshow("Markers", markers8u);
-    cv::waitKey(0);
+    //cv::imshow("Markers", markers8u);
+    //cv::waitKey(0);
 
     //apply the watershed algorithm
     cv::Mat result = input.clone();

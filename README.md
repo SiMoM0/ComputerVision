@@ -48,3 +48,12 @@ Topics:
 * Clustering based methods
 
 Files: [Lab5](https://github.com/SiMoM0/ComputerVision/tree/master/Lab5)
+
+### Lab 6 - Image Matching
+
+Topics:
+* Evaluating features on images
+* Matching features between images
+* Compare images' content using different matching strategy
+
+Files: [Lab6](https://github.com/SiMoM0/ComputerVision/tree/master/Lab6)

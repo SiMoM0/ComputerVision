@@ -57,3 +57,12 @@ Topics:
 * Compare images' content using different matching strategy
 
 Files: [Lab6](https://github.com/SiMoM0/ComputerVision/tree/master/Lab6)
+
+### Lab 7 - Image Stitching
+
+Topics:
+* Creation of a panorama by merging together a set of images
+* Cylindrical projection and SIFT feature extraction
+* Brute force matcher and findHomography() function
+
+Files: [Lab7](https://github.com/SiMoM0/ComputerVision/tree/master/Lab7)

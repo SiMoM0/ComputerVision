@@ -53,7 +53,7 @@ cv::Mat Panoramic::create(const int& angle, const float& ratio) {
     cv::Mat descriptor1, descriptor2;
 
     //matches for all images pairs
-    std::vector<std::vector<cv::DMatch>> good_matches {images.size()-1};
+    std::vector<cv::DMatch> good_matches;
     
     for(int i=0; i<proj_images.size()-1; ++i) {
         //detect keypoints on both images
@@ -64,11 +64,12 @@ cv::Mat Panoramic::create(const int& angle, const float& ratio) {
         cv::drawKeypoints(proj_images[i], keypoints1, feat1);
         cv::drawKeypoints(proj_images[i+1], keypoints2, feat2);
         //save image with features
-        feat_images.push_back(feat1);
-        feat_images.push_back(feat2);
+        //feat_images.push_back(feat1);
+        //feat_images.push_back(feat2);
         //show images with features detection
-        //cv::imshow("Feature", feat1);
-        //cv::waitKey(0);
+        cv::imshow("Feature 1", feat1);
+        cv::imshow("Feature 2", feat2);
+        cv::waitKey(0);
 
         //match features using BFMatcher
         cv::Ptr<cv::BFMatcher> matcher = cv::BFMatcher::create(cv::NORM_L2);
@@ -93,33 +94,37 @@ cv::Mat Panoramic::create(const int& angle, const float& ratio) {
         for(int k=0; k<matches.size(); ++k) {
             if(matches[k].distance < distance) {
                 //add match to vector good_matches
-                good_matches[i].push_back(matches[k]);
+                good_matches.push_back(matches[k]);
             }
         }
-        std::printf("Number of good matches: %d\n", good_matches[i].size());
+        std::printf("Number of good matches: %d\n", good_matches.size());
 
         //draw 'correct' matches between a pair of images
-        cv::Mat result;
-        cv::drawMatches(images[i], keypoints1, images[i+1], keypoints2, good_matches[i], result, cv::Scalar(0, 255, 0), cv::Scalar(0, 255, 0));
-        imshow("Match", result);
+        cv::Mat draw;
+        cv::drawMatches(proj_images[i], keypoints1, proj_images[i+1], keypoints2, good_matches, draw, cv::Scalar(0, 255, 0), cv::Scalar(0, 255, 0));
+        imshow("Match", draw);
         cv::waitKey(0);
 
         //store good keypoints from good_matches
         std::vector<cv::Point2f> points1, points2;
-        for(int j=0; j<good_matches[i].size(); ++j) {
-            points1.push_back(keypoints1[good_matches[i][j].queryIdx].pt);
-            points2.push_back(keypoints2[good_matches[i][j].trainIdx].pt);
+        for(int j=0; j<good_matches.size(); ++j) {
+            points1.push_back(keypoints1[good_matches[j].queryIdx].pt);
+            points2.push_back(keypoints2[good_matches[j].trainIdx].pt);
         }
         //find homography
         cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC);
         std::cout << "H = " << std::endl << H << std::endl;
     
-        //warp the two images
-        cv::Mat warp;
-        cv::warpPerspective(images[i], warp, H, cv::Size(images[i].cols+images[i+1].cols, images[i].rows));
-        cv::Mat half (warp, cv::Rect(0, 0, images[i+1].cols, images[i+1].rows));
-        images[i+1].copyTo(half);
-        cv::imshow("Stitch", half);
+        //TODO: warp the two images
+        cv::Mat stitch;
+        cv::warpPerspective(images[i+1], stitch, H, cv::Size(images[i+1].cols, images[i+1].rows));
+        cv::Mat result (cv::Size(images[i].cols+images[i+1].cols, images[i+1].rows), CV_8UC3);
+        cv::Mat half1 = result(cv::Rect(0, 0, images[i].cols, images[i].rows));
+        images[i].copyTo(half1);
+        cv::Mat half2 = result(cv::Rect(images[i].cols-static_cast<int>(H.at<uchar>(0, 2)), 0, images[i].cols, images[i].rows));
+        stitch.copyTo(half2);
+        cv::imshow("Stitch", result);
+        cv::waitKey(0);
     }
 
     //return output image

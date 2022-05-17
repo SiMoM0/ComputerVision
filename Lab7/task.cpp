@@ -19,11 +19,11 @@ int main(int argc, char** argv) {
     printf("Number of images: %d\n", pan.getSize());
 
     //visualize all the images
-    pan.visualizeImages();
+    //pan.visualizeImages();
 
     //create panoramic image
     int angle = 27;
-    Mat panoramic = pan.create(angle, 1.8);
+    Mat panoramic = pan.create(angle, 2);
 
     //show panoramic image
     namedWindow("Panoramic");

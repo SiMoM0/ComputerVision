@@ -66,3 +66,12 @@ Topics:
 * Brute force matcher and findHomography() function
 
 Files: [Lab7](https://github.com/SiMoM0/ComputerVision/tree/master/Lab7)
+
+### Lab 8 - Camera Calibration
+
+Topics:
+* Get calibration images using a camera
+* Calibrates the camera using the points of the pattern
+* Undistorts and rectifies new images
+
+Files: [Lab8](https://github.com/SiMoM0/ComputerVision/tree/master/Lab8)
